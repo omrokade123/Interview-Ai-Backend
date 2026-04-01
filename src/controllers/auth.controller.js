@@ -44,7 +44,7 @@ async function registerUserController(req,res){
 
     res.cookie("token",token,{
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: true,
         sameSite: "none"
     });
 
@@ -90,7 +90,7 @@ async function loginUserController(req,res){
 
     res.cookie("token",token,{
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: true,
         sameSite: "none"
     });
     res.status(200).json({
