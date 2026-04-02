@@ -1,7 +1,7 @@
 const { GoogleGenAI } = require("@google/genai");
 
 const OpenAI = require("openai");
-const puppeteer  = require("puppeteer-core");
+const puppeteer  = require("puppeteer");
 
 
 
@@ -240,11 +240,7 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
 }
 
 async function generatePdfFromHtml(htmlContent) {
-  const browser = await puppeteer.launch({
-    executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    headless: "new",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  });
+  const browser = await puppeteer.launch();
   const page = await browser.newPage();
   await page.setContent(htmlContent, { waitUntil: "networkidle0" })
 
