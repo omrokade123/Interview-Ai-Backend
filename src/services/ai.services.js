@@ -1,4 +1,3 @@
-const { GoogleGenAI } = require("@google/genai");
 
 const OpenAI = require("openai");
 const puppeteer  = require("puppeteer");
