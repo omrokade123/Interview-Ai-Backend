@@ -6,28 +6,32 @@ const interviewReportModel = require("../models/interviewReport.model.js");
  * @description Controller to generate interview report based on user self description, resume and job description.
  */
 async function genrateInterviewReportController(req, res) {
-
-    const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
-    const { selfDescription, jobDescription } = req.body;
-
-    const interviewReportByAi = await generateInterviewReport({
-        resume: resumeContent.text,
-        selfDescription,
-        jobDescription
-    });
-
-    const interviewReport = await interviewReportModel.create({
-        user: req.user.id,
-        resume: resumeContent.text,
-        selfDescription,
-        jobDescription,
-        ...interviewReportByAi
-    })
-    // llama-v3p1-8b-instruct
-    res.status(201).json({
-        message: "Interview report genrated successfully",
-        interviewReport
-    })
+    try {
+        const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
+        const { selfDescription, jobDescription } = req.body;
+        const jobDescText = jobDescription.slice(0, 2000);
+        const interviewReportByAi = await generateInterviewReport({
+            resume: resumeContent.text,
+            selfDescription,
+            jobDescription: jobDescText
+        });
+        const interviewReport = await interviewReportModel.create({
+            user: req.user.id,
+            resume: resumeContent.text,
+            selfDescription,
+            jobDescription,
+            ...interviewReportByAi
+        })
+        
+        res.status(201).json({
+            message: "Interview report genrated successfully",
+            interviewReport
+        })
+    }catch(error){
+        console.error(error);
+        res.status(500).json({message:"Failed to genrate report"});
+    }
+    
 }
 
 /**
@@ -84,4 +88,4 @@ async function generateResumePdfController(req, res) {
 
     res.send(pdfBuffer)
 }
-module.exports = { genrateInterviewReportController, getInterviewReportById,getAllInterviewReports, generateResumePdfController };
+module.exports = { genrateInterviewReportController, getInterviewReportById, getAllInterviewReports, generateResumePdfController };

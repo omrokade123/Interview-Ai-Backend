@@ -1,6 +1,6 @@
 
 const OpenAI = require("openai");
-const puppeteer  = require("puppeteer");
+const puppeteer = require("puppeteer");
 
 
 
@@ -109,110 +109,30 @@ const interviewReportJsonSchema = {
 async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
 
 
-  const prompt = `You are a strict JSON generator.
+  const prompt = `
+        Generate an interview preparation report for the given candidate and job role.
 
-            Generate EXACTLY ONE interview report object based on the given Resume, Self Description, and Job Description.
+        Return ONLY a JSON object matching the provided schema.
 
-            ⚠️ STRICT RULES (MUST FOLLOW):
-            - Return ONLY a valid JSON object
-            - DO NOT return an array
-            - DO NOT include explanations or extra text
-            - DO NOT rename fields
-            - DO NOT skip any field
-            - DO NOT add extra fields
-            - DO NOT stringify objects inside arrays
+        Requirements:
+        - title: job role name
+        - matchScore: number between 0–100
+        - technicalQuestions: 5 items (question, intention, answer)
+        - behavioralQuestions: 3 items (question, intention, answer)
+        - skillGaps: 3 items (skill, severity: low | medium | high)
+        - preparationPlan: 5 days (day, focus, tasks[])
 
-            ----------------------------------
+        Candidate Resume:
+        ${resume}
 
-            📌 REQUIRED JSON STRUCTURE:
+        Self Description:
+        ${selfDescription}
 
-            {
-            "title": string,
-            "matchScore": number,
+        Job Description:
+        ${jobDescription}
+        `;
 
-            "technicalQuestions": [
-                {
-                "question": string,
-                "intention": string,
-                "answer": string
-                }
-            ],
 
-            "behavioralQuestions": [
-                {
-                "question": string,
-                "intention": string,
-                "answer": string
-                }
-            ],
-
-            "skillGaps": [
-                {
-                "skill": string,
-                "severity": "low" | "medium" | "high"
-                }
-            ],
-
-            "preparationPlan": [
-                {
-                "day": number,
-                "focus": string,
-                "tasks": [string]
-                }
-            ]
-            }
-
-            ----------------------------------
-
-            📌 REQUIREMENTS:
-
-            - "title" must match the job role
-            - "matchScore" must be between 0 and 100
-            - Generate at least:
-            - 5 technicalQuestions
-            - 3 behavioralQuestions
-            - 3 skillGaps
-            - 5 preparationPlan days
-
-            ----------------------------------
-
-            📌 IMPORTANT FORMAT RULES:
-
-            ❌ WRONG:
-            "technicalQuestions": ["{...}", "{...}"]
-
-            ❌ WRONG:
-            "skillGaps": ["React", "Node"]
-
-            ❌ WRONG:
-            "technicalQuestions": undefined
-
-            ❌ WRONG:
-            Returning array: [ {...} ]
-
-            ✅ CORRECT:
-            "technicalQuestions": [
-            {
-                "question": "...",
-                "intention": "...",
-                "answer": "..."
-            }
-            ]
-
-            ----------------------------------
-
-            📌 INPUT DATA:
-
-            Resume:
-            ${resume}
-
-            Self Description:
-            ${selfDescription}
-
-            Job Description:
-            ${jobDescription}
-
-    `;
 
   const response = await client.chat.completions.create({
     model: "accounts/fireworks/models/gpt-oss-20b",
@@ -229,11 +149,18 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
         schema: interviewReportJsonSchema
       }
     },
-    temperature: 0.2
+    temperature: 0.2,
   });
 
 
-  return JSON.parse(response.choices[0].message.content);
+  let content = response.choices[0].message;
+
+  try {
+    return JSON.parse(content.content);
+  } catch (error) {
+    console.error("Invalid JSON from AI:", content.content);
+    throw new Error("AI returned invalid JSON");
+  }
 
 
 }
